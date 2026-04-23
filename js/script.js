@@ -1,19 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // === THEME  ===
+    // === 0. THEME & MODAL LOGIC ===
     const themeToggleBtn = document.getElementById('themeToggle');
     let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
-    function applyTheme() {
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-            themeToggleBtn.textContent = '☀️'; 
-        } else {
-            document.body.classList.remove('dark-mode');
-            themeToggleBtn.textContent = '🌙'; 
-        }
-    }
-    applyTheme(); // Terapkan saat web pertama kali dimuat
+    const applyTheme = () => {
+        document.body.classList.toggle('dark-mode', isDarkMode);
+        themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
+    };
+    applyTheme();
 
     themeToggleBtn.addEventListener('click', () => {
         isDarkMode = !isDarkMode;
@@ -21,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTheme();
     });
 
-    // === 1. LOGIC (POP-UP DI TENGAH) ===
     const modal = document.getElementById('customModal');
     const modalTitle = document.getElementById('modalTitle');
     const modalMessage = document.getElementById('modalMessage');
@@ -30,266 +24,161 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalConfirm = document.getElementById('modalConfirm');
     let modalCallback = null;
 
-    // Fungsi untuk memanggil pop-up
-    function showModal(config) {
+    const showModal = (config) => {
         modalTitle.textContent = config.title || 'Notice';
-        
-        if (config.message) {
-            modalMessage.textContent = config.message;
-            modalMessage.style.display = 'block';
-        } else {
-            modalMessage.style.display = 'none';
-        }
-
+        modalMessage.textContent = config.message || '';
         if (config.type === 'prompt') {
             modalInput.style.display = 'block';
             modalInput.value = config.defaultValue || '';
-            modalCancel.style.display = 'block'; 
+            modalCancel.style.display = 'block';
         } else {
-            
             modalInput.style.display = 'none';
-            modalCancel.style.display = 'none'; 
+            modalCancel.style.display = 'none';
         }
-
-        modalCallback = config.onConfirm || null;
-        modal.showModal(); 
-    }
-
-    modalCancel.addEventListener('click', () => {
-        modal.close();
-    });
+        modalCallback = config.onConfirm;
+        modal.showModal();
+    };
 
     modalConfirm.addEventListener('click', () => {
-        if (modalCallback) {
-            // Jika benar, kirim value inputnya. Jika alert, cukup tutup.
-            if (modalInput.style.display === 'block') {
-                modalCallback(modalInput.value);
-            } else {
-                modalCallback();
-            }
-        }
+        if (modalCallback) modalCallback(modalInput.value);
         modal.close();
     });
+    modalCancel.addEventListener('click', () => modal.close());
 
-    // === 2. CLOCK & GREETING ===
-    const timeDisplay = document.getElementById('timeDisplay');
-    const dateDisplay = document.getElementById('dateDisplay');
-    const greetingText = document.getElementById('greetingText');
-    const userNameEl = document.getElementById('userName');
+    const showToast = (msg, success = false) => {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('aside');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        const t = document.createElement('output');
+        t.className = `toast ${success ? 'success' : ''}`;
+        t.textContent = msg;
+        container.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+    };
 
-    function updateClock() {
+    // === 1. CLOCK & GREETING ===
+    const updateClock = () => {
         const now = new Date();
-        timeDisplay.textContent = now.toLocaleTimeString('en-US', { hour12: false });
-        dateDisplay.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        
-        const hour = now.getHours();
-        if (hour < 12) greetingText.textContent = 'Morning';
-        else if (hour < 18) greetingText.textContent = 'Afternoon';
-        else greetingText.textContent = 'Evening';
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+        document.getElementById('timeDisplay').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+        document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const h = now.getHours();
+        document.getElementById('greetingText').textContent = h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening';
+    };
+    setInterval(updateClock, 1000); updateClock();
 
-    // Mengganti Nama 
-    let savedName = localStorage.getItem('dashName') || 'Yudewo';
-    userNameEl.textContent = savedName;
-
+    const userNameEl = document.getElementById('userName');
+    userNameEl.textContent = localStorage.getItem('dashName') || 'Yudewo';
     userNameEl.addEventListener('click', () => {
         showModal({
-            type: 'prompt',
-            title: 'Change Name',
-            message: 'What should we call you?',
-            defaultValue: savedName,
-            onConfirm: (newName) => {
-                if(newName && newName.trim() !== '') { 
-                    savedName = newName.trim();
-                    userNameEl.textContent = savedName; 
-                    localStorage.setItem('dashName', savedName); 
-                }
-            }
+            type: 'prompt', title: 'Change Name', message: 'What is your name?', defaultValue: userNameEl.textContent,
+            onConfirm: (n) => { if(n.trim()) { userNameEl.textContent = n.trim(); localStorage.setItem('dashName', n.trim()); }}
         });
     });
 
-    // === 3. FOCUS TIMER ===
+    // === 2. DYNAMIC FOCUS TIMER ===
     const timerOutput = document.getElementById('focusTimerDisplay');
-    const btnStart = document.getElementById('btnStart');
-    const btnStop = document.getElementById('btnStop');
-    const btnReset = document.getElementById('btnReset');
-
-    const STARTING_TIME = 25 * 60;
-    let timeLeft = STARTING_TIME;
+    const timeInput = document.getElementById('timeInput');
+    let startingTime = parseInt(localStorage.getItem('dashTimer')) || 25 * 60;
+    let timeLeft = startingTime;
     let timerId = null;
 
-    function renderTimer() {
+    timeInput.value = startingTime / 60;
+
+    const renderTimer = () => {
         const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
         const s = (timeLeft % 60).toString().padStart(2, '0');
         timerOutput.textContent = `${m}:${s}`;
-    }
+    };
 
-    btnStart.addEventListener('click', () => {
-        if (timerId !== null) return; 
-        
-        timerId = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                renderTimer();
-            } else {
-                clearInterval(timerId);
-                timerId = null;
-                
-                showModal({ type: 'alert', title: 'Time is Up!', message: 'Focus time is up! Take a break.' });
-            }
-        }, 1000);
-    });
-
-    btnStop.addEventListener('click', () => {
-        if (timerId !== null) {
-            clearInterval(timerId);
-            timerId = null;
+    document.getElementById('timeForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const mins = parseInt(timeInput.value);
+        if (mins > 0) {
+            startingTime = mins * 60;
+            timeLeft = startingTime;
+            localStorage.setItem('dashTimer', startingTime);
+            if (timerId) { clearInterval(timerId); timerId = null; }
+            renderTimer();
+            showToast(`Timer set to ${mins} mins`, true);
         }
     });
 
-    btnReset.addEventListener('click', () => {
-        clearInterval(timerId);
-        timerId = null;
-        timeLeft = STARTING_TIME;
-        renderTimer();
-    });
+    document.getElementById('btnStart').onclick = () => {
+        if (timerId) return;
+        timerId = setInterval(() => {
+            if (timeLeft > 0) { timeLeft--; renderTimer(); }
+            else { clearInterval(timerId); timerId = null; showModal({ title: 'Finish!', message: 'Focus time is up!' }); }
+        }, 1000);
+    };
+
+    document.getElementById('btnStop').onclick = () => { clearInterval(timerId); timerId = null; };
+    document.getElementById('btnReset').onclick = () => { clearInterval(timerId); timerId = null; timeLeft = startingTime; renderTimer(); };
     renderTimer();
 
-    // === 4. QUICK LINKS ===
-    const linkForm = document.getElementById('linkForm');
-    const linksContainer = document.getElementById('linksContainer');
+    // === 3. QUICK LINKS ===
     let links = JSON.parse(localStorage.getItem('dashLinks')) || [];
-
-    function renderLinks() {
-        linksContainer.innerHTML = '';
+    const renderLinks = () => {
+        const container = document.getElementById('linksContainer');
+        container.innerHTML = '';
         links.forEach((l, i) => {
             const a = document.createElement('a');
-            a.className = 'link-tag';
-            a.href = l.url;
-            a.target = '_blank';
-            
-            const closeBtn = document.createElement('span');
-            closeBtn.textContent = ' ×';
-            closeBtn.className = 'link-delete';
-            closeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                links.splice(i, 1);
-                localStorage.setItem('dashLinks', JSON.stringify(links));
-                renderLinks();
-            });
-
-            a.textContent = l.name;
-            a.appendChild(closeBtn);
-            linksContainer.appendChild(a);
+            a.className = 'link-tag'; a.href = l.url; a.target = '_blank';
+            a.innerHTML = `${l.name} <span style="cursor:pointer" onclick="event.preventDefault(); deleteLink(${i})">×</span>`;
+            container.appendChild(a);
         });
-    }
+    };
 
-    linkForm.addEventListener('submit', (e) => {
+    document.getElementById('linkForm').onsubmit = (e) => {
         e.preventDefault();
-        const nameInput = document.getElementById('linkName');
-        const urlInput = document.getElementById('linkUrl');
-        
-        const name = nameInput.value.trim();
-        let url = urlInput.value.trim().toLowerCase();
-
-        if (!/^https?:\/\//i.test(url)) {
-            url = 'https://' + url;
-        }
-
-        // Pop-up Alert Jika URL Duplikat
-        if (links.some(link => link.url === url)) {
-            showModal({ type: 'alert', title: 'Duplicate Error', message: 'URL already exists in Quick Links!' });
-            return;
-        }
-
-        links.push({ name, url });
+        const n = document.getElementById('linkName').value.trim();
+        let u = document.getElementById('linkUrl').value.trim().toLowerCase();
+        if (!u.startsWith('http')) u = 'https://' + u;
+        if (links.some(l => l.url === u)) return showToast("URL already exists!");
+        links.push({ name: n, url: u });
         localStorage.setItem('dashLinks', JSON.stringify(links));
-        linkForm.reset();
-        renderLinks();
-    });
+        e.target.reset(); renderLinks();
+    };
+
+    window.deleteLink = (i) => { links.splice(i, 1); localStorage.setItem('dashLinks', JSON.stringify(links)); renderLinks(); };
     renderLinks();
 
-    // === 5. TASKS ===
-    const taskForm = document.getElementById('taskForm');
-    const taskList = document.getElementById('taskList');
+    // === 4. TASKS ===
     let tasks = JSON.parse(localStorage.getItem('dashTasks')) || [];
-
-    function saveAndRenderTasks() {
-        localStorage.setItem('dashTasks', JSON.stringify(tasks));
-        renderTasks();
-    }
-
-    function renderTasks() {
-        taskList.innerHTML = '';
-        tasks.sort((a,b) => a.done === b.done ? 0 : a.done ? 1 : -1);
-        
+    const renderTasks = () => {
+        const list = document.getElementById('taskList');
+        list.innerHTML = '';
+        tasks.sort((a,b) => a.done - b.done);
         tasks.forEach((t, i) => {
             const li = document.createElement('li');
             li.className = `task-item ${t.done ? 'completed' : ''}`;
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = t.done;
-            checkbox.addEventListener('change', () => {
-                tasks[i].done = !tasks[i].done;
-                saveAndRenderTasks();
-            });
-
-            const span = document.createElement('span');
-            span.textContent = t.text;
-            span.className = 'task-text';
-            span.title = "Click to edit";
-            span.addEventListener('click', () => {
-                // Pop-up Prompt untuk Edit Tugas
-                showModal({
-                    type: 'prompt',
-                    title: 'Edit Task',
-                    defaultValue: t.text,
-                    onConfirm: (newText) => {
-                        if (newText && newText.trim() !== "") {
-                            if (tasks.some((task, index) => index !== i && task.text.toLowerCase() === newText.trim().toLowerCase())) {
-                                showModal({ type: 'alert', title: 'Duplicate Error', message: 'Task name already exists!' });
-                                return;
-                            }
-                            tasks[i].text = newText.trim();
-                            saveAndRenderTasks();
-                        }
-                    }
-                });
-            });
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'btn btn-red';
-            delBtn.textContent = 'Delete';
-            delBtn.style.marginLeft = 'auto';
-            delBtn.addEventListener('click', () => {
-                tasks.splice(i, 1);
-                saveAndRenderTasks();
-            });
-
-            li.append(checkbox, span, delBtn);
-            taskList.appendChild(li);
+            li.innerHTML = `
+                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${i})">
+                <span class="task-text" onclick="editTask(${i})">${t.text}</span>
+                <button class="btn btn-red" onclick="deleteTask(${i})">Delete</button>
+            `;
+            list.appendChild(li);
         });
-    }
+        localStorage.setItem('dashTasks', JSON.stringify(tasks));
+    };
 
-    taskForm.addEventListener('submit', (e) => {
+    document.getElementById('taskForm').onsubmit = (e) => {
         e.preventDefault();
-        const input = document.getElementById('taskInput');
-        const text = input.value.trim();
+        const val = document.getElementById('taskInput').value.trim();
+        if (tasks.some(t => t.text.toLowerCase() === val.toLowerCase())) return showToast("Task already exists!");
+        tasks.push({ text: val, done: false });
+        e.target.reset(); renderTasks();
+    };
 
-        if (text === '') return;
-
-        // Pop-up Alert Jika Task Duplikat
-        if (tasks.some(t => t.text.toLowerCase() === text.toLowerCase())) {
-            showModal({ type: 'alert', title: 'Duplicate Error', message: 'This task is already on your list!' });
-            return;
-        }
-
-        tasks.push({ text: text, done: false });
-        input.value = '';
-        saveAndRenderTasks();
-    });
+    window.toggleTask = (i) => { tasks[i].done = !tasks[i].done; renderTasks(); };
+    window.deleteTask = (i) => { tasks.splice(i, 1); renderTasks(); };
+    window.editTask = (i) => {
+        showModal({
+            type: 'prompt', title: 'Edit Task', defaultValue: tasks[i].text,
+            onConfirm: (val) => { if(val.trim()) { tasks[i].text = val.trim(); renderTasks(); }}
+        });
+    };
     renderTasks();
 });

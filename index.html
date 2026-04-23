@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Dashboard - Yudewo</title>
+    <title>To-Do-List Life Dashboard - Yudewo</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -17,7 +17,14 @@
 
         <section class="card timer-area">
             <h3 class="card-title">Focus Timer</h3>
+            
+            <form id="timeForm" class="input-form time-setting-form">
+                <input type="number" id="timeInput" class="input-field" value="25" min="1" max="120" required title="Set minutes">
+                <button type="submit" class="btn btn-blue">Set Min</button>
+            </form>
+
             <output id="focusTimerDisplay" class="timer-display">25:00</output>
+            
             <menu class="timer-controls">
                 <button type="button" id="btnStart" class="btn btn-blue">Start</button>
                 <button type="button" id="btnStop" class="btn btn-gray">Stop</button>
@@ -29,8 +36,8 @@
             <h3 class="card-title">Quick Links</h3>
             <form id="linkForm" class="input-form">
                 <input type="text" id="linkName" placeholder="Link name" class="input-field" required>
-                <input type="url" id="linkUrl" placeholder="https://..." class="input-field" required>
-                <button type="submit" class="btn btn-blue">Add</button>
+                <input type="url" id="linkUrl" placeholder="https://..." class="input-field url-input" required>
+                <button type="submit" class="btn btn-blue btn-add">Add</button>
             </form>
             <nav id="linksContainer" class="links-container" aria-label="Quick Links">
                 </nav>
