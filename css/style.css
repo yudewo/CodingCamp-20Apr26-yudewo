@@ -37,10 +37,13 @@ body {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
+    /*align-items: center; */
     padding: 20px;
     color: var(--text-main);
     transition: background 0.3s ease, color 0.3s ease;
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 /* Transisi halus saat ganti mode */
@@ -138,6 +141,19 @@ body {
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; list-style: none; margin-top: 10px; }
 
 /* --- RESPONSIVE --- */
-@media (max-width: 768px) {
-    .dashboard-grid { grid-template-columns: 1fr; grid-template-areas: "header" "timer" "links" "tasks"; }
+@media (max-width: 768px) { 
+    .dashboard-grid { 
+        grid-template-columns: 1fr; 
+        grid-template-areas: "header" "timer" "links" "tasks"; 
+    } 
+    
+    /* Tumpuk form ke bawah di layar sempit */
+    .input-form {
+        flex-direction: column;
+    }
+
+    /* Form timer tetap ke samping agar rapi */
+    .time-setting-form {
+        flex-direction: row;
+    }
 }
