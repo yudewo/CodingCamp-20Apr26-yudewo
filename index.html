@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Dashboard - Yudewo</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <main class="dashboard-grid">
+        <header class="card header-area">
+            <button id="themeToggle" class="theme-btn" aria-label="Toggle Dark Mode">🌙</button>
+            <time id="timeDisplay" class="clock-text">00:00:00</time>
+            <time id="dateDisplay" class="date-text">Loading date...</time>
+            <h2>Good <span id="greetingText">Morning</span>, <span id="userName" class="editable-name" title="Click to change name">Yudewo</span></h2>
+        </header>
+
+        <section class="card timer-area">
+            <h3 class="card-title">Focus Timer</h3>
+            <output id="focusTimerDisplay" class="timer-display">25:00</output>
+            <menu class="timer-controls">
+                <button type="button" id="btnStart" class="btn btn-blue">Start</button>
+                <button type="button" id="btnStop" class="btn btn-gray">Stop</button>
+                <button type="button" id="btnReset" class="btn btn-gray">Reset</button>
+            </menu>
+        </section>
+
+        <section class="card links-area">
+            <h3 class="card-title">Quick Links</h3>
+            <form id="linkForm" class="input-form">
+                <input type="text" id="linkName" placeholder="Link name" class="input-field" required>
+                <input type="url" id="linkUrl" placeholder="https://..." class="input-field" required>
+                <button type="submit" class="btn btn-blue">Add</button>
+            </form>
+            <nav id="linksContainer" class="links-container" aria-label="Quick Links">
+                </nav>
+        </section>
+
+        <section class="card tasks-area">
+            <h3 class="card-title">Tasks</h3>
+            <form id="taskForm" class="input-form">
+                <input type="text" id="taskInput" placeholder="Add a new task..." class="input-field" required>
+                <button type="submit" class="btn btn-blue">Add</button>
+            </form>
+            <ul id="taskList" class="task-list">
+                </ul>
+        </section>
+    </main>
+
+    <dialog id="customModal" class="modal">
+        <form method="dialog" class="modal-content">
+            <h3 id="modalTitle" class="modal-title">Notice</h3>
+            <p id="modalMessage" class="modal-message"></p>
+            <input type="text" id="modalInput" class="input-field modal-input">
+            <menu class="modal-actions">
+                <button type="button" id="modalCancel" class="btn btn-gray">Cancel</button>
+                <button type="button" id="modalConfirm" class="btn btn-blue">OK</button>
+            </menu>
+        </form>
+    </dialog>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
